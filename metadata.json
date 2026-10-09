@@ -1,0 +1,6 @@
+{
+  "name": "أصالة | Asala Workspace & Life OS",
+  "description": "نظام أصالة المتكامل لإدارة الحياة اليومية، المهام، العادات، المالية، وجلسات التركيز مع تكامل رسمي لخدمات Google Workspace.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
