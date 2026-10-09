@@ -28,6 +28,63 @@ export const FinanceView: React.FC<Props> = ({
   const [category, setCategory] = useState('طعام');
   const [exportingSheet, setExportingSheet] = useState(false);
 
+  // Feature: Savings Goals
+  const [savingsGoals, setSavingsGoals] = useState<Array<{ id: string; title: string; target: number; current: number }>>(() => {
+    try {
+      const saved = localStorage.getItem('asala_savings_goals');
+      return saved ? JSON.parse(saved) : [
+        { id: '1', title: 'صندوق الطوارئ', target: 5000, current: 1500 },
+        { id: '2', title: 'ادخار رحلة عائلية', target: 3000, current: 800 },
+      ];
+    } catch {
+      return [];
+    }
+  });
+
+  const [newGoalTitle, setNewGoalTitle] = useState('');
+  const [newGoalTarget, setNewGoalTarget] = useState('');
+  const [depositAmount, setDepositAmount] = useState<Record<string, string>>({});
+
+  const saveGoalsToStorage = (goals: any) => {
+    setSavingsGoals(goals);
+    localStorage.setItem('asala_savings_goals', JSON.stringify(goals));
+  };
+
+  const addSavingsGoal = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newGoalTitle.trim() || !newGoalTarget) return;
+    const targetVal = parseFloat(newGoalTarget);
+    if (isNaN(targetVal) || targetVal <= 0) return;
+
+    const newGoal = {
+      id: generateId(),
+      title: newGoalTitle.trim(),
+      target: targetVal,
+      current: 0,
+    };
+    saveGoalsToStorage([...savingsGoals, newGoal]);
+    setNewGoalTitle('');
+    setNewGoalTarget('');
+    showToast('تمت إضافة هدف الادخار');
+  };
+
+  const handleDepositToGoal = (id: string) => {
+    const amt = parseFloat(depositAmount[id] || '0');
+    if (isNaN(amt) || amt <= 0) return;
+
+    const updated = savingsGoals.map((g) => (g.id === id ? { ...g, current: g.current + amt } : g));
+    saveGoalsToStorage(updated);
+    setDepositAmount({ ...depositAmount, [id]: '' });
+    showToast(`تم إيداع ${amt} رس في هدف الادخار`);
+  };
+
+  const deleteGoal = (id: string) => {
+    confirmAction('حذف هدف الادخار هذا؟', () => {
+      saveGoalsToStorage(savingsGoals.filter((g) => g.id !== id));
+      showToast('تم الحذف', 'info');
+    });
+  };
+
   const categories = {
     income: ['راتب', 'أعمال حرة', 'هدية', 'استثمار', 'أخرى'],
     expense: ['طعام', 'فواتير', 'تسوق', 'مواصلات', 'صحة', 'ترفيه', 'أخرى'],
@@ -375,6 +432,97 @@ export const FinanceView: React.FC<Props> = ({
           </Card>
         </div>
       </div>
+
+      {/* Feature: Savings Pots & Goals */}
+      <Card title="صناديق الادخار والأهداف المالية" icon="fa-solid fa-piggy-bank">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <form onSubmit={addSavingsGoal} className="space-y-4">
+            <h4 className="font-bold text-sm text-olive-800 dark:text-beige-300">
+              إنشاء هدف ادخار جديد
+            </h4>
+            <Input
+              label="اسم الهدف / الصندوق"
+              value={newGoalTitle}
+              onChange={(e) => setNewGoalTitle(e.target.value)}
+              placeholder="مثال: شراء لابتوب، صندوق الطوارئ..."
+              required
+            />
+            <Input
+              label="المبلغ المستهدف (رس)"
+              type="number"
+              value={newGoalTarget}
+              onChange={(e) => setNewGoalTarget(e.target.value)}
+              placeholder="3000"
+              required
+            />
+            <Button type="submit" icon="fa-solid fa-plus" className="w-full">
+              إضافة الهدف
+            </Button>
+          </form>
+
+          <div className="lg:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {savingsGoals.map((g) => {
+              const pct = Math.min(100, Math.round((g.current / g.target) * 100));
+              return (
+                <div
+                  key={g.id}
+                  className="p-4 rounded-2xl border border-beige-200 dark:border-dark-border bg-beige-50/40 dark:bg-dark-bg/40 flex flex-col justify-between"
+                >
+                  <div>
+                    <div className="flex justify-between items-start mb-2">
+                      <h5 className="font-bold text-dark dark:text-beige-50 text-base">{g.title}</h5>
+                      <button
+                        onClick={() => deleteGoal(g.id)}
+                        className="text-beige-300 hover:text-red-500 text-xs cursor-pointer p-1"
+                        title="حذف الهدف"
+                      >
+                        <i className="fa-solid fa-xmark"></i>
+                      </button>
+                    </div>
+
+                    <div className="flex justify-between text-xs text-beige-600 dark:text-beige-400 mb-1.5">
+                      <span>
+                        تم ادخار {g.current.toLocaleString()} من {g.target.toLocaleString()} رس
+                      </span>
+                      <span className="font-bold text-olive-700 dark:text-olive-400">{pct}%</span>
+                    </div>
+
+                    <div className="w-full bg-beige-200 dark:bg-dark-border h-2.5 rounded-full overflow-hidden mb-3">
+                      <div
+                        className="bg-olive-600 h-full rounded-full transition-all duration-300"
+                        style={{ width: `${pct}%` }}
+                      ></div>
+                    </div>
+                  </div>
+
+                  <div className="flex gap-2 pt-2 border-t border-beige-100 dark:border-dark-border/60">
+                    <input
+                      type="number"
+                      placeholder="مبلغ الإيداع..."
+                      value={depositAmount[g.id] || ''}
+                      onChange={(e) => setDepositAmount({ ...depositAmount, [g.id]: e.target.value })}
+                      className="flex-1 bg-white dark:bg-dark-surface border border-beige-300 dark:border-dark-border rounded-xl px-2.5 py-1 text-xs focus:outline-none"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => handleDepositToGoal(g.id)}
+                      className="px-3 py-1 bg-olive-700 text-white rounded-xl text-xs hover:bg-olive-800 cursor-pointer font-medium"
+                    >
+                      إيداع
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
+
+            {savingsGoals.length === 0 && (
+              <div className="sm:col-span-2 text-center py-8 text-beige-400">
+                <p className="text-sm">لا توجد أهداف ادخار مسجلة بعد. حدد هدفك المالي الأول!</p>
+              </div>
+            )}
+          </div>
+        </div>
+      </Card>
     </div>
   );
 };

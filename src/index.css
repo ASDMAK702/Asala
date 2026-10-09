@@ -54,16 +54,25 @@ html.dark body {
 html.dark ::-webkit-scrollbar-thumb { background: #3f5128; }
 html.dark ::-webkit-scrollbar-thumb:hover { background: #4f6631; }
 
+.shadow-elegant {
+  box-shadow: 0 4px 20px -2px rgba(63, 81, 40, 0.05);
+}
+
+html.dark .shadow-elegant,
+.shadow-elegant-dark {
+  box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.3);
+}
+
 .glass-panel {
-  background: rgba(242, 239, 231, 0.75);
+  background: rgba(242, 239, 231, 0.7);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(230, 224, 209, 0.6);
+  border: 1px solid rgba(230, 224, 209, 0.5);
 }
 
 html.dark .glass-panel {
-  background: rgba(36, 36, 34, 0.75);
-  border: 1px solid rgba(51, 51, 48, 0.6);
+  background: rgba(36, 36, 34, 0.7);
+  border: 1px solid rgba(51, 51, 48, 0.5);
 }
 
 .pie-chart {

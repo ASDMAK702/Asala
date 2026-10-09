@@ -69,12 +69,12 @@ export const Card: React.FC<{
 }> = ({ children, className = '', title, action, icon, onClick }) => (
   <div
     onClick={onClick}
-    className={`bg-white dark:bg-dark-surface rounded-2xl shadow-sm border border-beige-200 dark:border-dark-border p-5 md:p-6 transition-all ${className}`}
+    className={`bg-white dark:bg-dark-surface rounded-2xl shadow-elegant dark:shadow-elegant-dark border border-beige-200 dark:border-dark-border p-6 ${className} animate-slide-up`}
   >
     {(title || action) && (
-      <div className="flex justify-between items-center mb-4 pb-3 border-b border-beige-100 dark:border-dark-border/60">
-        <h3 className="font-serif text-lg md:text-xl text-olive-900 dark:text-beige-50 font-bold flex items-center gap-2">
-          {icon && <i className={`${icon} text-olive-600 dark:text-olive-400`}></i>}
+      <div className="flex justify-between items-center mb-5 pb-3 border-b border-beige-100 dark:border-dark-border/50">
+        <h3 className="font-serif text-xl text-olive-900 dark:text-beige-50 font-bold flex items-center gap-2">
+          {icon && <i className={`${icon} text-olive-500`}></i>}
           {title}
         </h3>
         {action}

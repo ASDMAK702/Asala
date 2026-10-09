@@ -79,9 +79,41 @@ export interface SyncLogItem {
   timestamp: string;
 }
 
-export interface GoogleUserProfile {
-  uid: string;
-  displayName: string | null;
-  email: string | null;
-  photoURL: string | null;
+export interface Book {
+  id: string;
+  title: string;
+  author: string;
+  totalPages: number;
+  currentPg: number;
+  status: 'reading' | 'completed' | 'wishlist';
+  notes?: string;
+  updatedAt?: string;
 }
+
+export interface SavingsGoal {
+  id: string;
+  title: string;
+  targetAmount: number;
+  currentAmount: number;
+  category: string;
+  deadline?: string;
+}
+
+export interface WeeklyReview {
+  id: string;
+  weekStartDate: string;
+  biggestWin: string;
+  lessonLearned: string;
+  rating: number; // 1 to 5
+  nextWeekPriorities: string[];
+  createdAt: string;
+}
+
+export interface TasbeehItem {
+  id: string;
+  phrase: string;
+  target: number;
+  count: number;
+  totalLifetime: number;
+}
+

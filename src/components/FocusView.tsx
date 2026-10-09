@@ -25,6 +25,94 @@ export const FocusView: React.FC<Props> = ({
   const [syncToCalendar, setSyncToCalendar] = useState(true);
   const timerRef = useRef<any>(null);
 
+  // Feature: Ambient Nature Soundscapes (Web Audio Synthesis)
+  const [ambientSound, setAmbientSound] = useState<'none' | 'rain' | 'waves' | 'noise'>('none');
+  const audioContextRef = useRef<AudioContext | null>(null);
+  const noiseNodeRef = useRef<AudioNode | null>(null);
+
+  const stopAmbient = () => {
+    if (audioContextRef.current) {
+      try {
+        audioContextRef.current.close();
+      } catch {}
+      audioContextRef.current = null;
+    }
+    noiseNodeRef.current = null;
+  };
+
+  const startAmbient = (type: 'rain' | 'waves' | 'noise') => {
+    stopAmbient();
+    try {
+      const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
+      audioContextRef.current = ctx;
+
+      // 2 seconds buffer of pink/white noise
+      const bufferSize = ctx.sampleRate * 2;
+      const noiseBuffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+      const output = noiseBuffer.getChannelData(0);
+      let b0 = 0, b1 = 0, b2 = 0, b3 = 0, b4 = 0, b5 = 0, b6 = 0;
+      for (let i = 0; i < bufferSize; i++) {
+        const white = Math.random() * 2 - 1;
+        // Pink noise approximation
+        b0 = 0.99886 * b0 + white * 0.0555179;
+        b1 = 0.99332 * b1 + white * 0.0750759;
+        b2 = 0.96900 * b2 + white * 0.1538520;
+        b3 = 0.86650 * b3 + white * 0.3104856;
+        b4 = 0.55000 * b4 + white * 0.5329522;
+        b5 = -0.7616 * b5 - white * 0.0168980;
+        output[i] = (b0 + b1 + b2 + b3 + b4 + b5 + b6 + white * 0.5362) * 0.07;
+        b6 = white * 0.115926;
+      }
+
+      const whiteNoise = ctx.createBufferSource();
+      whiteNoise.buffer = noiseBuffer;
+      whiteNoise.loop = true;
+
+      const filter = ctx.createBiquadFilter();
+      const gainNode = ctx.createGain();
+
+      if (type === 'rain') {
+        filter.type = 'lowpass';
+        filter.frequency.setValueAtTime(800, ctx.currentTime);
+        gainNode.gain.setValueAtTime(0.12, ctx.currentTime);
+      } else if (type === 'waves') {
+        filter.type = 'bandpass';
+        filter.frequency.setValueAtTime(450, ctx.currentTime);
+        filter.Q.setValueAtTime(1.2, ctx.currentTime);
+        gainNode.gain.setValueAtTime(0.18, ctx.currentTime);
+      } else {
+        filter.type = 'lowpass';
+        filter.frequency.setValueAtTime(1200, ctx.currentTime);
+        gainNode.gain.setValueAtTime(0.08, ctx.currentTime);
+      }
+
+      whiteNoise.connect(filter);
+      filter.connect(gainNode);
+      gainNode.connect(ctx.destination);
+
+      whiteNoise.start(0);
+      noiseNodeRef.current = whiteNoise;
+    } catch {
+      // AudioContext unavailable
+    }
+  };
+
+  const handleToggleSound = (type: 'rain' | 'waves' | 'noise') => {
+    if (ambientSound === type) {
+      stopAmbient();
+      setAmbientSound('none');
+    } else {
+      startAmbient(type);
+      setAmbientSound(type);
+    }
+  };
+
+  useEffect(() => {
+    return () => {
+      stopAmbient();
+    };
+  }, []);
+
   const times = { work: 25, shortBreak: 5, longBreak: 15, breathe: 2 };
   const labels = {
     work: 'جلسة تركيز وعمل',
@@ -123,9 +211,9 @@ export const FocusView: React.FC<Props> = ({
       </div>
 
       {/* Circular Progress & Breathing Animation */}
-      <div className="relative w-72 h-72 sm:w-80 sm:h-80 flex items-center justify-center mb-10">
+      <div className="relative w-72 h-72 sm:w-80 sm:h-80 flex items-center justify-center mb-8">
         {mode === 'breathe' && isActive && (
-          <div className="absolute w-44 h-44 bg-teal-300 dark:bg-teal-800 rounded-full animate-breathe opacity-40 mix-blend-multiply filter blur-xl"></div>
+          <div className="absolute w-40 h-40 bg-teal-100 dark:bg-teal-950/40 rounded-full animate-breathe border border-teal-200 dark:border-teal-800/50"></div>
         )}
 
         <svg className="absolute w-full h-full transform -rotate-90">
@@ -167,7 +255,7 @@ export const FocusView: React.FC<Props> = ({
       </div>
 
       {/* Control Buttons */}
-      <div className="flex gap-4 items-center">
+      <div className="flex gap-4 items-center mb-6">
         <Button
           onClick={toggleTimer}
           size="lg"
@@ -184,6 +272,59 @@ export const FocusView: React.FC<Props> = ({
           icon="fa-solid fa-rotate-right"
           title="إعادة ضبط الوقت"
         ></Button>
+      </div>
+
+      {/* Feature 5: Ambient Focus Soundscapes */}
+      <div className="p-3 rounded-2xl bg-white/70 dark:bg-dark-surface/70 border border-beige-200 dark:border-dark-border mb-4 flex items-center justify-center gap-2 flex-wrap">
+        <span className="text-xs text-beige-600 dark:text-beige-400 font-medium ml-2">
+          <i className="fa-solid fa-headphones ml-1 text-olive-600"></i>
+          أصوات التركيز المحيطية:
+        </span>
+        <button
+          type="button"
+          onClick={() => handleToggleSound('rain')}
+          className={`px-3 py-1.5 rounded-xl text-xs font-medium transition-all cursor-pointer ${
+            ambientSound === 'rain'
+              ? 'bg-olive-700 text-white shadow-xs'
+              : 'bg-beige-100 dark:bg-dark-bg text-beige-700 dark:text-beige-300'
+          }`}
+        >
+          <i className="fa-solid fa-cloud-rain ml-1"></i>
+          مطر هادئ
+        </button>
+        <button
+          type="button"
+          onClick={() => handleToggleSound('waves')}
+          className={`px-3 py-1.5 rounded-xl text-xs font-medium transition-all cursor-pointer ${
+            ambientSound === 'waves'
+              ? 'bg-olive-700 text-white shadow-xs'
+              : 'bg-beige-100 dark:bg-dark-bg text-beige-700 dark:text-beige-300'
+          }`}
+        >
+          <i className="fa-solid fa-water ml-1"></i>
+          أمواج البحر
+        </button>
+        <button
+          type="button"
+          onClick={() => handleToggleSound('noise')}
+          className={`px-3 py-1.5 rounded-xl text-xs font-medium transition-all cursor-pointer ${
+            ambientSound === 'noise'
+              ? 'bg-olive-700 text-white shadow-xs'
+              : 'bg-beige-100 dark:bg-dark-bg text-beige-700 dark:text-beige-300'
+          }`}
+        >
+          <i className="fa-solid fa-wind ml-1"></i>
+          عزل الضوضاء
+        </button>
+        {ambientSound !== 'none' && (
+          <button
+            type="button"
+            onClick={stopAmbient}
+            className="text-xs text-red-500 hover:underline p-1 cursor-pointer"
+          >
+            إيقاف الصوت
+          </button>
+        )}
       </div>
 
       {/* Bottom info */}

@@ -12,6 +12,8 @@ import {
   JournalEntry,
   Finances,
   VisionGoal,
+  Book,
+  WeeklyReview,
   AppSettings,
   SyncLogItem,
 } from '@/src/types';
@@ -24,6 +26,9 @@ import { JournalView } from '@/src/components/JournalView';
 import { FinanceView } from '@/src/components/FinanceView';
 import { FocusView } from '@/src/components/FocusView';
 import { VisionView } from '@/src/components/VisionView';
+import { LibraryView } from '@/src/components/LibraryView';
+import { TasbeehView } from '@/src/components/TasbeehView';
+import { WeeklyReviewView } from '@/src/components/WeeklyReviewView';
 import { SettingsView } from '@/src/components/SettingsView';
 import { formatDate } from '@/src/components/CommonUI';
 
@@ -73,6 +78,8 @@ export default function App() {
     history: [],
   });
   const [vision, setVision] = useLocalStorage<VisionGoal[]>('asala_pro_vision', []);
+  const [library, setLibrary] = useLocalStorage<Book[]>('asala_pro_library', []);
+  const [weeklyReviews, setWeeklyReviews] = useLocalStorage<WeeklyReview[]>('asala_weekly_reviews', []);
   const [settings, setSettings] = useLocalStorage<AppSettings>('asala_pro_settings', {
     userName: 'صديقي',
     theme: 'light',
@@ -150,24 +157,30 @@ export default function App() {
     if (restored.journal) setJournal(restored.journal);
     if (restored.finances) setFinances(restored.finances);
     if (restored.vision) setVision(restored.vision);
+    if (restored.library) setLibrary(restored.library);
+    if (restored.weeklyReviews) setWeeklyReviews(restored.weeklyReviews);
     if (restored.settings) setSettings((prev) => ({ ...prev, ...restored.settings }));
     if (typeof restored.waterGlasses === 'number') setWaterGlasses(restored.waterGlasses);
   };
 
+  // Primary Navigation Items
   const navItems = [
     { id: 'dashboard', icon: 'fa-solid fa-compass', label: 'الرئيسية' },
+    { id: 'vision', icon: 'fa-solid fa-mountain-sun', label: 'الرؤية' },
+    { id: 'tasks', icon: 'fa-solid fa-list-check', label: 'المهام' },
+    { id: 'habits', icon: 'fa-solid fa-seedling', label: 'العادات' },
+    { id: 'library', icon: 'fa-solid fa-book-open', label: 'المكتبة' },
+    { id: 'journal', icon: 'fa-solid fa-feather', label: 'اليوميات' },
+    { id: 'tasbeeh', icon: 'fa-solid fa-peace', label: 'السكينة والمسبحة' },
+    { id: 'finance', icon: 'fa-solid fa-wallet', label: 'المالية' },
+    { id: 'focus', icon: 'fa-solid fa-stopwatch', label: 'التركيز' },
+    { id: 'weekly-review', icon: 'fa-solid fa-compass-drafting', label: 'المراجعة الأسبوعية' },
     {
       id: 'connected-services',
       icon: 'fa-brands fa-google',
       label: 'الخدمات المتصلة',
-      badge: user ? 'متصل' : 'جديد',
+      badge: user ? 'متصل' : undefined,
     },
-    { id: 'tasks', icon: 'fa-solid fa-list-check', label: 'المهام' },
-    { id: 'habits', icon: 'fa-solid fa-seedling', label: 'العادات' },
-    { id: 'journal', icon: 'fa-solid fa-feather', label: 'اليوميات' },
-    { id: 'finance', icon: 'fa-solid fa-wallet', label: 'المالية' },
-    { id: 'focus', icon: 'fa-solid fa-stopwatch', label: 'التركيز' },
-    { id: 'vision', icon: 'fa-solid fa-mountain-sun', label: 'الرؤية' },
     { id: 'settings', icon: 'fa-solid fa-gear', label: 'الإعدادات' },
   ];
 
@@ -182,6 +195,7 @@ export default function App() {
               journal,
               finances,
               vision,
+              library,
               settings,
               waterGlasses,
               setWaterGlasses,
@@ -191,22 +205,15 @@ export default function App() {
           />
         );
 
-      case 'connected-services':
+      case 'vision':
         return (
-          <ConnectedServicesView
-            user={user}
-            tasks={tasks}
-            habits={habits}
-            journal={journal}
-            finances={finances}
+          <VisionView
             vision={vision}
-            settings={settings}
-            onRestoreData={handleRestoreData}
+            setVision={setVision}
+            user={user}
             showToast={showToast}
             confirmAction={confirmAction}
-            syncLogs={syncLogs}
             addSyncLog={addSyncLog}
-            clearSyncLogs={clearSyncLogs}
           />
         );
 
@@ -232,6 +239,17 @@ export default function App() {
           />
         );
 
+      case 'library':
+        return (
+          <LibraryView
+            library={library}
+            setLibrary={setLibrary}
+            showToast={showToast}
+            confirmAction={confirmAction}
+            addSyncLog={addSyncLog}
+          />
+        );
+
       case 'journal':
         return (
           <JournalView
@@ -243,6 +261,9 @@ export default function App() {
             addSyncLog={addSyncLog}
           />
         );
+
+      case 'tasbeeh':
+        return <TasbeehView />;
 
       case 'finance':
         return (
@@ -267,15 +288,33 @@ export default function App() {
           />
         );
 
-      case 'vision':
+      case 'weekly-review':
         return (
-          <VisionView
-            vision={vision}
-            setVision={setVision}
-            user={user}
+          <WeeklyReviewView
+            reviews={weeklyReviews}
+            setReviews={setWeeklyReviews}
             showToast={showToast}
             confirmAction={confirmAction}
             addSyncLog={addSyncLog}
+          />
+        );
+
+      case 'connected-services':
+        return (
+          <ConnectedServicesView
+            user={user}
+            tasks={tasks}
+            habits={habits}
+            journal={journal}
+            finances={finances}
+            vision={vision}
+            settings={settings}
+            onRestoreData={handleRestoreData}
+            showToast={showToast}
+            confirmAction={confirmAction}
+            syncLogs={syncLogs}
+            addSyncLog={addSyncLog}
+            clearSyncLogs={clearSyncLogs}
           />
         );
 
@@ -289,7 +328,7 @@ export default function App() {
             onNavigateToServices={() => setActiveTab('connected-services')}
             showToast={showToast}
             confirmAction={confirmAction}
-            appData={{ tasks, habits, journal, finances, vision, waterGlasses }}
+            appData={{ tasks, habits, journal, finances, vision, library, waterGlasses }}
             onRestoreData={handleRestoreData}
           />
         );
@@ -303,6 +342,7 @@ export default function App() {
               journal,
               finances,
               vision,
+              library,
               settings,
               waterGlasses,
               setWaterGlasses,
@@ -316,55 +356,31 @@ export default function App() {
 
   return (
     <div className="flex h-screen overflow-hidden font-sans selection:bg-olive-200 selection:text-olive-900 bg-beige-100 dark:bg-[#151514] text-dark dark:text-beige-100">
-      {/* Desktop Sidebar */}
+      {/* Sidebar Desktop - Clean original Asala structure */}
       <aside className="hidden md:flex flex-col w-64 lg:w-72 bg-beige-50 dark:bg-dark-surface border-l border-beige-200 dark:border-dark-border h-full z-20 shrink-0">
-        <div className="p-6 lg:p-7 flex items-center justify-between border-b border-beige-200 dark:border-dark-border">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-2xl bg-olive-700 text-beige-50 flex items-center justify-center font-serif text-xl font-bold shadow-xs">
-              أ
-            </div>
-            <div>
-              <h1 className="font-serif text-2xl lg:text-3xl font-bold text-olive-800 dark:text-beige-50 tracking-wide">
-                أصالة
-              </h1>
-              <p className="text-[11px] text-olive-600 dark:text-olive-400 font-medium">
-                Workspace &amp; Life OS
-              </p>
-            </div>
-          </div>
+        <div className="p-6 lg:p-8 flex items-center justify-center border-b border-beige-200 dark:border-dark-border">
+          <h1 className="font-serif text-3xl lg:text-4xl font-bold text-olive-800 dark:text-beige-50 tracking-wider">
+            أصالة
+          </h1>
         </div>
 
-        <nav className="flex-1 px-4 py-5 space-y-1.5 overflow-y-auto no-scrollbar">
+        <nav className="flex-1 px-4 py-6 space-y-1.5 overflow-y-auto no-scrollbar">
           {navItems.map((item) => {
             const isActive = activeTab === item.id;
             return (
               <button
                 key={item.id}
                 onClick={() => setActiveTab(item.id)}
-                className={`w-full flex items-center justify-between px-4 py-3 rounded-2xl transition-all duration-200 font-medium cursor-pointer ${
+                className={`w-full flex items-center gap-4 px-4 py-3 rounded-2xl transition-all duration-300 font-medium cursor-pointer ${
                   isActive
-                    ? 'bg-olive-700 dark:bg-olive-600 text-beige-50 shadow-md transform scale-[1.01]'
-                    : 'text-olive-800 dark:text-beige-300 hover:bg-beige-200/80 dark:hover:bg-dark-bg'
+                    ? 'bg-olive-700 dark:bg-olive-600 text-beige-50 shadow-md transform scale-[1.02]'
+                    : 'text-olive-700 dark:text-beige-300 hover:bg-beige-200 dark:hover:bg-dark-bg'
                 }`}
               >
-                <div className="flex items-center gap-3.5">
-                  <i
-                    className={`${item.icon} text-lg w-5 text-center ${
-                      isActive ? 'text-beige-50' : 'text-olive-600 dark:text-olive-400'
-                    }`}
-                  ></i>
-                  <span className="text-sm">{item.label}</span>
-                </div>
+                <i className={`${item.icon} text-lg w-6 text-center`}></i>
+                <span className="flex-1 text-right text-sm">{item.label}</span>
                 {item.badge && (
-                  <span
-                    className={`text-[10px] px-2 py-0.5 rounded-full font-bold ${
-                      isActive
-                        ? 'bg-white/20 text-white'
-                        : item.badge === 'متصل'
-                        ? 'bg-green-100 text-green-700 dark:bg-green-950/50 dark:text-green-300'
-                        : 'bg-olive-100 text-olive-700 dark:bg-olive-950/50 dark:text-olive-300'
-                    }`}
-                  >
+                  <span className="text-[10px] bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300 px-2 py-0.5 rounded-full font-bold">
                     {item.badge}
                   </span>
                 )}
@@ -373,13 +389,8 @@ export default function App() {
           })}
         </nav>
 
-        {/* Sidebar Footer */}
-        <div className="p-4 border-t border-beige-200 dark:border-dark-border text-center">
-          <div className="flex items-center justify-center gap-1.5 text-xs text-olive-700 dark:text-olive-400 font-medium">
-            <i className="fa-brands fa-google text-sm"></i>
-            <span>Google Workspace رسمي</span>
-          </div>
-          <p className="text-[10px] text-beige-500 mt-1">تزامن وتشفير آمن للبيانات</p>
+        <div className="p-4 text-center border-t border-beige-200 dark:border-dark-border text-xs text-beige-400 dark:text-dark-border">
+          إصدار أصالة الشامل | 100+ ميزة
         </div>
       </aside>
 
@@ -394,14 +405,9 @@ export default function App() {
             onClick={(e) => e.stopPropagation()}
           >
             <div className="p-6 border-b border-beige-200 dark:border-dark-border flex justify-between items-center">
-              <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-xl bg-olive-700 text-white flex items-center justify-center font-serif font-bold text-lg">
-                  أ
-                </div>
-                <h1 className="font-serif text-2xl font-bold text-olive-800 dark:text-beige-50">
-                  أصالة
-                </h1>
-              </div>
+              <h1 className="font-serif text-3xl font-bold text-olive-800 dark:text-beige-50">
+                أصالة
+              </h1>
               <button
                 onClick={() => setMobileMenuOpen(false)}
                 className="text-2xl text-dark dark:text-beige-50 p-2 cursor-pointer"
@@ -410,7 +416,7 @@ export default function App() {
               </button>
             </div>
 
-            <nav className="flex-1 p-4 space-y-2 overflow-y-auto">
+            <nav className="flex-1 p-4 space-y-1.5 overflow-y-auto no-scrollbar">
               {navItems.map((item) => {
                 const isActive = activeTab === item.id;
                 return (
@@ -420,18 +426,16 @@ export default function App() {
                       setActiveTab(item.id);
                       setMobileMenuOpen(false);
                     }}
-                    className={`w-full flex items-center justify-between px-4 py-3.5 rounded-2xl transition-all font-medium text-base cursor-pointer ${
+                    className={`w-full flex items-center gap-4 px-5 py-3 rounded-2xl transition-all font-medium text-base cursor-pointer ${
                       isActive
                         ? 'bg-olive-700 text-beige-50'
-                        : 'text-olive-800 dark:text-beige-300 hover:bg-beige-200 dark:hover:bg-dark-bg'
+                        : 'text-olive-700 dark:text-beige-300 hover:bg-beige-200 dark:hover:bg-dark-bg'
                     }`}
                   >
-                    <div className="flex items-center gap-3">
-                      <i className={`${item.icon} text-lg w-6 text-center`}></i>
-                      <span>{item.label}</span>
-                    </div>
+                    <i className={`${item.icon} text-lg w-6 text-center`}></i>
+                    <span className="flex-1 text-right">{item.label}</span>
                     {item.badge && (
-                      <span className="text-xs bg-olive-100 text-olive-800 px-2 py-0.5 rounded-full">
+                      <span className="text-[10px] bg-green-100 text-green-700 px-2 py-0.5 rounded-full font-bold">
                         {item.badge}
                       </span>
                     )}
@@ -456,8 +460,8 @@ export default function App() {
 
       {/* Main App Content Viewport */}
       <main className="flex-1 flex flex-col h-full overflow-hidden relative">
-        {/* Top Header */}
-        <header className="h-20 bg-beige-50/85 dark:bg-dark-surface/85 backdrop-blur-md border-b border-beige-200 dark:border-dark-border flex items-center justify-between px-5 sm:px-8 lg:px-10 z-10 shrink-0">
+        {/* Top Header - Clean original layout */}
+        <header className="h-20 bg-beige-50/80 dark:bg-dark-surface/80 backdrop-blur-md border-b border-beige-200 dark:border-dark-border flex items-center justify-between px-6 lg:px-10 z-10 shrink-0">
           <div className="flex items-center gap-4">
             <button
               className="md:hidden text-olive-800 dark:text-beige-50 text-2xl p-2 cursor-pointer"
@@ -466,16 +470,14 @@ export default function App() {
             >
               <i className="fa-solid fa-bars-staggered"></i>
             </button>
-            <div>
-              <h2 className="font-serif text-xl sm:text-2xl text-olive-900 dark:text-beige-50 font-bold">
-                {navItems.find((i) => i.id === activeTab)?.label}
-              </h2>
-            </div>
+            <h2 className="font-serif text-2xl text-olive-800 dark:text-beige-50 font-bold hidden sm:block">
+              {navItems.find((i) => i.id === activeTab)?.label}
+            </h2>
           </div>
 
-          <div className="flex items-center gap-3 sm:gap-4">
-            <span className="text-xs font-medium text-beige-600 dark:text-beige-400 hidden lg:inline-block">
-              {formatDate(new Date().toISOString(), true)}
+          <div className="flex items-center gap-4">
+            <span className="text-sm font-medium text-beige-600 dark:text-beige-400 hidden md:inline-block">
+              {formatDate(new Date().toISOString())}
             </span>
 
             {/* Official Google Sign-In & Profile Component */}
@@ -494,7 +496,7 @@ export default function App() {
 
         {/* Global Toast Notification */}
         {toast && (
-          <div className="absolute bottom-6 left-1/2 transform -translate-x-1/2 bg-neutral-900 dark:bg-beige-50 text-white dark:text-neutral-900 px-6 py-3 rounded-2xl shadow-xl flex items-center gap-3 z-50 animate-slide-up text-sm font-medium border border-neutral-700/50">
+          <div className="absolute bottom-6 left-1/2 transform -translate-x-1/2 bg-dark dark:bg-beige-50 text-white dark:text-dark px-6 py-3 rounded-full shadow-lg flex items-center gap-3 z-50 animate-slide-up text-sm font-medium border border-dark/20">
             <i
               className={`fa-solid ${
                 toast.type === 'success'
@@ -511,30 +513,24 @@ export default function App() {
         {/* Confirmation Modal */}
         {confirmDialog && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-fade-in">
-            <div className="bg-white dark:bg-dark-surface rounded-3xl p-6 md:p-8 max-w-md w-full shadow-2xl animate-slide-up mx-4 border border-beige-200 dark:border-dark-border text-center">
-              <div className="w-14 h-14 rounded-2xl bg-olive-100 dark:bg-olive-900/40 text-olive-700 dark:text-olive-300 flex items-center justify-center text-2xl mx-auto mb-4">
-                <i className="fa-solid fa-circle-question"></i>
-              </div>
-              <h3 className="font-serif text-xl font-bold text-dark dark:text-beige-50 mb-3">
-                تأكيد الإجراء
-              </h3>
-              <p className="text-sm text-beige-700 dark:text-beige-300 leading-relaxed mb-6 font-sans">
+            <div className="bg-white dark:bg-dark-surface rounded-2xl p-6 md:p-8 max-w-sm w-full shadow-2xl animate-slide-up mx-4 text-center">
+              <h3 className="font-serif text-xl font-bold text-dark dark:text-beige-50 mb-4 text-center">
                 {confirmDialog.message}
-              </p>
-              <div className="flex gap-3 flex-col sm:flex-row">
+              </h3>
+              <div className="flex gap-4 mt-8 flex-col sm:flex-row">
                 <button
                   type="button"
                   onClick={() => setConfirmDialog(null)}
-                  className="flex-1 py-3 px-4 rounded-xl font-medium text-sm bg-beige-200 text-olive-900 dark:bg-dark-bg dark:text-beige-200 hover:bg-beige-300 dark:hover:bg-neutral-800 transition-colors cursor-pointer"
+                  className="flex-1 py-2.5 px-4 rounded-xl font-medium text-sm bg-beige-200 text-olive-800 hover:bg-beige-300 dark:bg-dark-surface dark:text-beige-200 border border-beige-300 dark:border-dark-border transition-colors cursor-pointer"
                 >
                   إلغاء
                 </button>
                 <button
                   type="button"
                   onClick={confirmDialog.onConfirm}
-                  className="flex-1 py-3 px-4 rounded-xl font-medium text-sm bg-olive-700 text-white hover:bg-olive-800 dark:bg-olive-600 transition-colors cursor-pointer shadow-md"
+                  className="flex-1 py-2.5 px-4 rounded-xl font-medium text-sm bg-red-50 text-red-600 hover:bg-red-100 border border-red-200 dark:bg-red-900/30 dark:text-red-400 dark:border-red-800/50 transition-colors cursor-pointer"
                 >
-                  تأكيد ومتابعة
+                  نعم، متأكد
                 </button>
               </div>
             </div>
